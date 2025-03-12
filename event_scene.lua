@@ -103,7 +103,10 @@ function event_scene:mousepressed(x, y, button)
     if button == 1 then -- left click
         local events = shared_state.getSelectedEvents()
         local eventHeight = 80
-        local startY = 100
+        local startY = 100  -- This is relative to the scene's y position
+        
+        -- We need to account for the scene's y position (100px below header)
+        local sceneY = y - 100  -- Adjust y to be relative to scene start
         
         for i, event in ipairs(events) do
             local eventY = startY + (i-1) * (eventHeight + 20)
@@ -111,9 +114,10 @@ function event_scene:mousepressed(x, y, button)
             -- Check if click is on the remove button
             if x >= love.graphics.getWidth() - 120 and
                x <= love.graphics.getWidth() - 60 and
-               y >= eventY + 15 and
-               y <= eventY + 40 then
+               sceneY >= eventY + 15 and
+               sceneY <= eventY + 40 then
                 shared_state.removeSelectedEvent(event.id)
+                print("Removing event: " .. event.title)
                 return true
             end
         end
