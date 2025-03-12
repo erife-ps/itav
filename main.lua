@@ -42,6 +42,7 @@ function love.load()
     hot_swap.track("flexbox", require("flexbox"))
     hot_swap.track("bulletin_scene", bulletin_scene)
     hot_swap.track("scene_manager", scene_manager)
+    hot_swap.track("shared_state", require("shared_state"))
     
     print("Application loaded successfully!")
 end
@@ -69,6 +70,12 @@ function love.mousepressed(x, y, button)
     -- Pass mouse events to header for button handling
     if y < 100 then
         header:mousepressed(x, y, button)
+    else
+        -- Pass to current scene
+        local current = scene_manager.scenes[scene_manager.current]
+        if current and current.mousepressed then
+            current:mousepressed(x, y, button)
+        end
     end
 end
 

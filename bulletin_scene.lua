@@ -1,5 +1,6 @@
 local grid = require("grid")
 local flexbox = require("flexbox")
+local shared_state = require("shared_state")
 
 local bulletin_scene = {
     grid = nil,
@@ -25,22 +26,42 @@ function bulletin_scene:init()
     self.title = "Community Bulletin Board"
     self.cards = {}
     
-    -- Create 7 sample cards with specified dimensions
+    -- List of event names
+    local events = {
+        "Dance Party - Friday Night",
+        "Book Club Discussion",
+        "Community Garden Meetup",
+        "Cooking Workshop",
+        "Movie Night",
+        "Art Exhibition",
+        "Yoga Class"
+    }
+    
+    -- Create cards with events
     for i = 1, 7 do
         table.insert(self.cards, {
-            title = "Notice #" .. i,
-            text = "This is bulletin card " .. i .. ". Each card is 100x150 pixels.",
+            id = i,  -- Add ID for tracking selection
+            title = events[i],
+            text = "Join us for this exciting community event! Click to add to your schedule.",
             color = {math.random()*0.5+0.5, math.random()*0.5+0.5, math.random()*0.5+0.5},
-            width = 100,   -- Card width
-            height = 150,  -- Card height
+            width = 100,
+            height = 150,
+            selected = false,
             draw = function(self, x, y, width, height)
                 -- Card background
                 love.graphics.setColor(self.color[1], self.color[2], self.color[3], 0.9)
                 love.graphics.rectangle("fill", x, y, width, height)
                 
-                -- Card border
-                love.graphics.setColor(0.2, 0.2, 0.2, 0.8)
+                -- Card border (red if selected)
+                if shared_state.isEventSelected(self.id) then
+                    love.graphics.setColor(1, 0, 0, 0.8)
+                    love.graphics.setLineWidth(3)
+                else
+                    love.graphics.setColor(0.2, 0.2, 0.2, 0.8)
+                    love.graphics.setLineWidth(1)
+                end
                 love.graphics.rectangle("line", x, y, width, height)
+                love.graphics.setLineWidth(1)  -- Reset line width
                 
                 -- Card content
                 love.graphics.setColor(0, 0, 0)
@@ -53,21 +74,40 @@ function bulletin_scene:init()
     
     -- Create flexbox layout for cards
     self.flexLayout = flexbox.create({
-        padding = 20,        -- Padding around the container
-        margin = 10,         -- Margin between cards
-        itemWidth = 100,     -- Default card width
-        itemHeight = 150,    -- Default card height
-        debug = true         -- Show layout outlines
+        padding = 20,
+        margin = 10,
+        itemWidth = 100,
+        itemHeight = 150,
+        debug = true
     })
     
     -- Add cards to flexbox
     self.flexLayout:addItems(self.cards)
 end
 
--- Handle resize events
-function bulletin_scene:resize(width, height)
-    -- Recalculate layouts
-    self:layoutComponents(width, height)
+-- Handle mouse clicks on cards
+function bulletin_scene:mousepressed(x, y, button)
+    if button == 1 then  -- Left click
+        for _, card in ipairs(self.cards) do
+            -- Check if click is within card boundaries
+            if x >= card.x and x <= card.x + card.width and
+               y >= card.y and y <= card.y + card.height then
+                -- Toggle selection
+                if shared_state.isEventSelected(card.id) then
+                    shared_state.removeSelectedEvent(card.id)
+                else
+                    shared_state.addSelectedEvent({
+                        id = card.id,
+                        title = card.title,
+                        text = card.text,
+                        color = card.color
+                    })
+                end
+                return true  -- Click handled
+            end
+        end
+    end
+    return false  -- Click not on any card
 end
 
 -- Layout all components
@@ -85,6 +125,12 @@ function bulletin_scene:layoutComponents(width, height)
         contentCell.width, 
         contentCell.height
     )
+end
+
+-- Handle resize events
+function bulletin_scene:resize(width, height)
+    -- Recalculate layouts
+    self:layoutComponents(width, height)
 end
 
 -- Draw the bulletin board scene
@@ -112,6 +158,17 @@ function bulletin_scene:draw(x, y, width, height)
     
     -- Draw cards using flexbox layout
     self.flexLayout:draw()
+    
+    -- Draw instructions
+    love.graphics.setFont(self.fonts.normal)
+    love.graphics.setColor(0.3, 0.3, 0.3)
+    love.graphics.printf(
+        "Click on events to add them to your schedule", 
+        x + 20, 
+        height - 40, 
+        width - 40, 
+        "center"
+    )
 end
 
 return bulletin_scene 
