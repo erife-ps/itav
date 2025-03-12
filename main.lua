@@ -8,58 +8,76 @@ local renderer = require("renderer")
 local content = require("content")
 local colors = require("colors")
 
+-- Main entry point for LÖVE application
+local scene_manager = require("scene_manager")
+local header = require("header")
+local bulletin_scene = require("bulletin_scene")
+local event_scene = require("event_scene")
+
 function love.load()
-    -- Set up window properties
-    love.window.setTitle("Hot Swappable Renderer Demo")
+    -- Set window properties
+    love.window.setTitle("Community Hub")
     love.window.setMode(800, 600, {
         resizable = true,
-        minwidth = 400,
-        minheight = 300
+        minwidth = 640,
+        minheight = 480
     })
     
-    -- Initialize the renderer
-    renderer.init()
+    -- Initialize components
+    header:init()
+    bulletin_scene:init()
+    event_scene:init()
+    
+    -- Set up scene manager
+    scene_manager.setHeader(header)
+    scene_manager.addScene("bulletin", bulletin_scene)
+    scene_manager.addScene("event", event_scene)
+    scene_manager.switchTo("bulletin")
+    
+    -- Initial layout based on window size
+    local width, height = love.graphics.getDimensions()
+    scene_manager.resize(width, height)
     
     -- Track modules for hot swapping
-    hot_swap.track("renderer", renderer)
-    hot_swap.track("content", content)
-    hot_swap.track("colors", colors)
+    hot_swap.track("flexbox", require("flexbox"))
+    hot_swap.track("bulletin_scene", bulletin_scene)
+    hot_swap.track("scene_manager", scene_manager)
     
     print("Application loaded successfully!")
 end
 
 function love.update(dt)
-    -- Check for hot swappable modules
-    hot_swap.update()
+    -- Update current scene
+    scene_manager.update(dt)
 end
 
 function love.draw()
-    -- Calculate window dimensions for responsive layout
-    local windowWidth, windowHeight = love.graphics.getDimensions()
+    -- Get current dimensions
+    local width, height = love.graphics.getDimensions()
     
-    -- Scale based on window size
-    local baseWidth = 800
-    local baseHeight = 600
-    scale = math.min(windowWidth / baseWidth, windowHeight / baseHeight)
-    
-    -- Use the renderer to draw everything
-    renderer.draw(windowWidth, windowHeight, scale)
-    
-    -- Draw debug info
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.print("Hot swapping enabled - edit renderer.lua, content.lua, or colors.lua", 10, 10)
+    -- Draw the scene
+    scene_manager.draw(width, height)
 end
 
-function love.resize(w, h)
-    print("Window resized to: " .. w .. "x" .. h)
-    -- No explicit action needed as our draw function is responsive
+function love.resize(width, height)
+    -- Handle window resize
+    scene_manager.resize(width, height)
+    print("Window resized to: " .. width .. "x" .. height)
+end
+
+function love.mousepressed(x, y, button)
+    -- Pass mouse events to header for button handling
+    if y < 100 then
+        header:mousepressed(x, y, button)
+    end
 end
 
 function love.keypressed(key)
     if key == "escape" then
         love.event.quit()
-    elseif key == "r" then
-        -- Force reload of all modules
-        hot_swap.force_reload()
+    elseif key == "b" then
+        scene_manager.switchTo("bulletin")
+    elseif key == "e" then
+        scene_manager.switchTo("event")
     end
 end 
