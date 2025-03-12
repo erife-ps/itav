@@ -7,6 +7,13 @@ local Header = require("header")
 local Scenes = require("scenes")
 
 function love.load()
+    -- Set window size if needed
+    love.window.setMode(1280, 720, {
+        resizable = true,
+        minwidth = 800,
+        minheight = 600
+    })
+    
     -- Load all modules
     Symbols.load()
     Header.load()
@@ -23,9 +30,7 @@ function love.load()
             symbols = {"A", "B", "C"},
             text = "This is a sample card with multiple lines of text to demonstrate how text wrapping works in the card layout.",
             recurrence = "Every Monday",
-            num_tabs = 4,
-            x = 50,
-            y = 50
+            num_tabs = 4
         }),
         Card({
             initial_cost = 75,
@@ -33,9 +38,7 @@ function love.load()
             symbols = {"X", "Y"},
             text = "Another sample card with different content.",
             recurrence = "First Tuesday of the month",
-            num_tabs = 3,
-            x = 270,
-            y = 50
+            num_tabs = 3
         }),
         Card({
             initial_cost = 150,
@@ -43,9 +46,7 @@ function love.load()
             symbols = {"1", "2", "3", "4", "5"},
             text = "A third card with many symbols.",
             recurrence = "Every other Thursday",
-            num_tabs = 6,
-            x = 490,
-            y = 50
+            num_tabs = 6
         }),
         Card({
             initial_cost = 50,
@@ -53,9 +54,7 @@ function love.load()
             symbols = {"@"},
             text = "Fourth card with minimal symbols.",
             recurrence = "One time",
-            num_tabs = 2,
-            x = 50,
-            y = 370
+            num_tabs = 2
         }),
         Card({
             initial_cost = 200,
@@ -63,16 +62,29 @@ function love.load()
             symbols = {"#", "$", "%", "&"},
             text = "Final card in the layout.",
             recurrence = "Every Friday",
-            num_tabs = 5,
-            x = 270,
-            y = 370
+            num_tabs = 5
         })
     }
+
+    -- Add more sample cards to test the 5-card layout
+    for i = 1, 5 do
+        table.insert(cards, Card({
+            initial_cost = 50 + i * 25,
+            ongoing_cost = 5 + i * 5,
+            symbols = {"X" .. i},
+            text = "Extra card #" .. i,
+            recurrence = "Monthly",
+            num_tabs = 3
+        }))
+    end
 
     -- Add cards to bulletin board
     for _, card in ipairs(cards) do
         Scenes.addCardToBulletin(card)
     end
+    
+    -- Explicitly arrange cards after adding them all
+    Scenes.arrangeCards()
 end
 
 function love.draw()
@@ -100,5 +112,10 @@ function love.keypressed(key)
     if key == "b" then
         Scenes.changeScene("bulletinBoard")
     end
+end
+
+function love.resize(w, h)
+    -- Handle window resize
+    Scenes.resize()
 end
 
