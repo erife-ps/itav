@@ -68,6 +68,11 @@ function love.load()
             y = 370
         })
     }
+
+    -- Add cards to bulletin board
+    for _, card in ipairs(cards) do
+        Scenes.addCardToBulletin(card)
+    end
 end
 
 function love.draw()
